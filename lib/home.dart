@@ -16,6 +16,13 @@ class _HomeState extends State<Home> {
   CameraController? cameraController;
   String result = '';
 
+  @override
+  void initState() {
+    super.initState();
+    initCamera();
+    loadModel();
+  }
+
   initCamera() {
     cameraController = CameraController(cameras![0], ResolutionPreset.medium);
     cameraController!.initialize().then((value) {
