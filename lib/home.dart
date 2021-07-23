@@ -23,7 +23,7 @@ class _HomeState extends State<Home> {
   }
 
   loadCamera() {
-    cameraController = CameraController(cameras![0], ResolutionPreset.medium);
+    cameraController = CameraController(cameras![0], ResolutionPreset.high);
     cameraController!.initialize().then((value) {
       if (!mounted) {
         return;
