@@ -1,8 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_live_emotion/main.dart';
 import 'package:tflite/tflite.dart';
-
-import 'main.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -14,16 +13,16 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   CameraImage? cameraImage;
   CameraController? cameraController;
-  String result = '';
+  String output = '';
 
   @override
   void initState() {
     super.initState();
-    initCamera();
-    loadModel();
+    loadCamera();
+    loadmodel();
   }
 
-  initCamera() {
+  loadCamera() {
     cameraController = CameraController(cameras![0], ResolutionPreset.medium);
     cameraController!.initialize().then((value) {
       if (!mounted) {
@@ -39,14 +38,9 @@ class _HomeState extends State<Home> {
     });
   }
 
-  loadModel() async {
-    await Tflite.loadModel(
-        model: "assets/model.tflite", labels: "assets/labels.txt");
-  }
-
   runModel() async {
     if (cameraImage != null) {
-      var recognitions = await Tflite.runModelOnFrame(
+      var predictions = await Tflite.runModelOnFrame(
           bytesList: cameraImage!.planes.map((plane) {
             return plane.bytes;
           }).toList(),
@@ -58,44 +52,42 @@ class _HomeState extends State<Home> {
           numResults: 2,
           threshold: 0.1,
           asynch: true);
-      recognitions!.forEach((element) {
+      predictions!.forEach((element) {
         setState(() {
-          result = element["label"];
-          print(result);
+          output = element['label'];
         });
       });
     }
   }
 
+  loadmodel() async {
+    await Tflite.loadModel(
+        model: "assets/model.tflite", labels: "assets/labels.txt");
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Face Mask Detector"),
+    return Scaffold(
+      appBar: AppBar(title: Text('Live Emotion Detection App')),
+      body: Column(children: [
+        Padding(
+          padding: EdgeInsets.all(20),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            width: MediaQuery.of(context).size.width,
+            child: !cameraController!.value.isInitialized
+                ? Container()
+                : AspectRatio(
+                    aspectRatio: cameraController!.value.aspectRatio,
+                    child: CameraPreview(cameraController!),
+                  ),
+          ),
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                height: MediaQuery.of(context).size.height - 170,
-                width: MediaQuery.of(context).size.width,
-                child: !cameraController!.value.isInitialized
-                    ? Container()
-                    : AspectRatio(
-                        aspectRatio: cameraController!.value.aspectRatio,
-                        child: CameraPreview(cameraController!),
-                      ),
-              ),
-            ),
-            Text(
-              result,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-            )
-          ],
-        ),
-      ),
+        Text(
+          output,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        )
+      ]),
     );
   }
 }
